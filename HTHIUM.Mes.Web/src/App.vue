@@ -67,7 +67,7 @@ const viewMeta: Record<ViewName, { title: string; subtitle: string }> = {
   servo: { title: '伺服健康分析', subtitle: '负载、温度和跟随误差趋势监控' },
   snapshots: { title: 'PLC报警快照', subtitle: '回放报警前后过程数据并形成证据链' },
   quality: { title: '数据质量中心', subtitle: '监测采集延迟、丢帧、断线与补传状态' },
-  users: { title: '账号管理', subtitle: '创建和管理MES系统登录账号' },
+  users: { title: '账号管理', subtitle: '创建和管理设备监控系统登录账号' },
 }
 
 async function login() {
@@ -208,19 +208,19 @@ onBeforeUnmount(async () => {
 </script>
 
 <template>
-  <div v-if="!sessionReady" class="session-loading"><div class="brand-mark">H</div><span>正在连接 HTHIUM MES...</span></div>
+  <div v-if="!sessionReady" class="session-loading"><div class="brand-mark">H</div><span>正在连接 HTHIUM...</span></div>
 
   <main v-else-if="!currentUser" class="login-page">
     <section class="login-brand-panel">
-      <div class="login-brand"><div class="brand-mark large">H</div><div><strong>HTHIUM MES</strong><span>制造执行系统</span></div></div>
+      <div class="login-brand"><div class="brand-mark large">H</div><div><strong>HTHIUM</strong><span>设备监控系统</span></div></div>
       <div class="login-copy"><span class="eyebrow">制造运行控制台</span><h1>设备状态，一屏掌握</h1><p>连接单机上位机，集中查看设备在线、PLC 通讯、报警与关键部件健康状态。</p></div>
       <div class="login-feature-grid"><div><Connection /><span><strong>实时连接</strong><small>SignalR状态推送</small></span></div><div><Lock /><span><strong>安全访问</strong><small>账号和权限隔离</small></span></div></div>
-      <footer>HTHIUM MES / INTERNAL MANUFACTURING PLATFORM</footer>
+      <footer>HTHIUM / EQUIPMENT MONITORING PLATFORM</footer>
     </section>
     <section class="login-form-panel">
       <div class="login-card">
         <div class="login-icon"><el-icon><User /></el-icon></div>
-        <h2>欢迎登录</h2><p>请输入MES系统账号进入运行中心</p>
+        <h2>欢迎登录</h2><p>请输入设备监控系统账号进入运行中心</p>
         <el-form label-position="top" @submit.prevent="login">
           <el-form-item label="用户名"><el-input v-model="loginForm.username" size="large" :prefix-icon="User" placeholder="请输入用户名" @keyup.enter="login" /></el-form-item>
           <el-form-item label="密码"><el-input v-model="loginForm.password" size="large" :prefix-icon="Lock" type="password" show-password placeholder="请输入密码" @keyup.enter="login" /></el-form-item>
@@ -233,7 +233,7 @@ onBeforeUnmount(async () => {
 
   <el-container v-else class="app-shell">
     <el-aside class="sidebar" width="224px">
-      <div class="brand"><div class="brand-mark">H</div><div><strong>HTHIUM MES</strong><span>制造执行系统</span></div></div>
+      <div class="brand"><div class="brand-mark">H</div><div><strong>HTHIUM</strong><span>设备监控系统</span></div></div>
       <nav class="navigation">
         <div class="nav-section">运行中心</div>
         <button type="button" :aria-current="currentView === 'overview' ? 'page' : undefined" :class="['nav-item', { active: currentView === 'overview' }]" @click="currentView = 'overview'"><el-icon><HomeFilled /></el-icon><span>生产运行总览</span><i></i></button>
@@ -255,7 +255,7 @@ onBeforeUnmount(async () => {
         <div><h1>{{ viewMeta[currentView].title }}</h1><p>{{ viewMeta[currentView].subtitle }}</p></div>
         <div class="topbar-right">
           <template v-if="currentView === 'devices'"><div class="refresh-time"><span>最后刷新</span><strong>{{ lastRefreshTime?.toLocaleTimeString('zh-CN', { hour12: false }) || '-' }}</strong></div><el-button :icon="Refresh" :loading="loading" @click="refresh()">刷新</el-button></template>
-          <div v-else-if="currentView !== 'users'" class="simulation-badge">演示数据</div><div class="system-badge"><span></span>MES 服务正常</div>
+          <div v-else-if="currentView !== 'users'" class="simulation-badge">演示数据</div><div class="system-badge"><span></span>监控服务正常</div>
           <div class="current-user"><div class="user-avatar">{{ currentUser.displayName.slice(0, 1) }}</div><div><strong>{{ currentUser.displayName }}</strong><span>{{ currentUser.role === 'Administrator' ? '系统管理员' : '操作员' }}</span></div></div>
           <el-button :icon="SwitchButton" text @click="logout">退出</el-button>
         </div>
