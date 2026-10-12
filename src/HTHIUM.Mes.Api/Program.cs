@@ -1,4 +1,5 @@
 using HTHIUM.Mes.Api.BackgroundServices;
+using HTHIUM.Mes.Api.Logging;
 using HTHIUM.Mes.Api.Realtime;
 using HTHIUM.Mes.Api.Security;
 using HTHIUM.Mes.Application.Devices;
@@ -9,6 +10,21 @@ using HTHIUM.Mes.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var fileLoggingOptions = builder.Configuration
+    .GetSection("FileLogging")
+    .Get<FileLoggingOptions>() ?? new FileLoggingOptions();
+if (fileLoggingOptions.Enabled)
+{
+    var logDirectory = Path.IsPathRooted(fileLoggingOptions.Directory)
+        ? fileLoggingOptions.Directory
+        : Path.GetFullPath(fileLoggingOptions.Directory, builder.Environment.ContentRootPath);
+    builder.Logging.AddProvider(new RollingFileLoggerProvider(
+        logDirectory,
+        fileLoggingOptions.MinimumLevel,
+        fileLoggingOptions.RetainedDays,
+        fileLoggingOptions.MaxFileSizeMb));
+}
 
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
@@ -70,15 +86,22 @@ builder.Services.AddSingleton<BootstrapAdminService>();
 builder.Services.AddHostedService<DeviceOfflineMonitorService>();
 
 var app = builder.Build();
+var lifecycleLogger = app.Services
+    .GetRequiredService<ILoggerFactory>()
+    .CreateLogger("HTHIUM.Mes.Api.Lifecycle");
 
-if (builder.Configuration.GetValue<bool>("DatabaseInitialization:ApplySchema"))
+AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
 {
-    await app.Services.GetRequiredService<IMesDatabaseInitializer>()
-        .InitializeAsync(app.Lifetime.ApplicationStopping);
-}
-
-await app.Services.GetRequiredService<BootstrapAdminService>()
-    .InitializeAsync(app.Lifetime.ApplicationStopping);
+    lifecycleLogger.LogCritical(
+        eventArgs.ExceptionObject as Exception,
+        "进程发生未处理异常，IsTerminating={IsTerminating}",
+        eventArgs.IsTerminating);
+};
+TaskScheduler.UnobservedTaskException += (_, eventArgs) =>
+{
+    lifecycleLogger.LogError(eventArgs.Exception, "检测到未观察的后台任务异常");
+    eventArgs.SetObserved();
+};
 
 app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
@@ -98,6 +121,35 @@ app.MapControllers();
 app.MapHub<OperationsHub>("/hubs/operations");
 app.MapFallbackToFile("index.html");
 
-app.Run();
+try
+{
+    lifecycleLogger.LogInformation(
+        "HTHIUM设备监控API正在启动，Environment={Environment}",
+        app.Environment.EnvironmentName);
+
+    if (builder.Configuration.GetValue<bool>("DatabaseInitialization:ApplySchema"))
+    {
+        await app.Services.GetRequiredService<IMesDatabaseInitializer>()
+            .InitializeAsync(app.Lifetime.ApplicationStopping);
+    }
+
+    await app.Services.GetRequiredService<BootstrapAdminService>()
+        .InitializeAsync(app.Lifetime.ApplicationStopping);
+
+    await app.RunAsync();
+}
+catch (OperationCanceledException) when (app.Lifetime.ApplicationStopping.IsCancellationRequested)
+{
+    lifecycleLogger.LogInformation("HTHIUM设备监控API收到正常停止请求");
+}
+catch (Exception exception)
+{
+    lifecycleLogger.LogCritical(exception, "HTHIUM设备监控API异常退出");
+    throw;
+}
+finally
+{
+    lifecycleLogger.LogInformation("HTHIUM设备监控API已停止");
+}
 
 public partial class Program;

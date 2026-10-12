@@ -93,6 +93,20 @@ dotnet run --project src/HTHIUM.Mes.Api --urls http://127.0.0.1:5180
 
 浏览器访问：`http://127.0.0.1:5180`
 
+## Windows后台启动与日志
+
+在项目根目录双击 `启动MES服务器.cmd` 后，API会在隐藏窗口中运行。启动脚本显示成功后可以安全关闭脚本窗口，服务不会随窗口关闭。需要停止时双击 `关闭MES服务器.cmd`，输入 `Y` 确认。
+
+运行记录保存在项目根目录的 `logs` 文件夹：
+
+```text
+logs/mes-api-yyyyMMdd.log       API启动、请求异常、后台任务异常和致命退出
+logs/mes-launcher-output.log    dotnet启动器标准输出
+logs/mes-launcher-error.log     启动失败、编译失败等标准错误
+```
+
+API日志默认按天创建，单文件达到20MB后自动分卷，并清理30天以前的日志。参数可通过 `FileLogging` 配置节调整。进程被系统断电或强制终止时，操作系统可能来不及写入最后一条日志。
+
 ## 当前阶段限制
 
 - 当前持久化设备最新状态和MES账号，完整心跳历史、审计日志和账号停用/重置密码功能属于后续阶段。
