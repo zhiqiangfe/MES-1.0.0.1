@@ -1,0 +1,29 @@
+# Visual Studio and .NET build output
+.vs/
+**/.vs/
+bin/
+**/bin/
+obj/
+**/obj/
+[Dd]ebug/
+[Rr]elease/
+TestResults/
+**/node_modules/
+HTHIUM.Mes.Web/dist/
+src/HTHIUM.Mes.Api/wwwroot/
+*.user
+*.suo
+*.vsidx
+*.pdb
+
+# Generated diagnostics and temporary files
+artifacts/
+**/artifacts/
+research-previews/
+**/research-previews/
+tmp/
+*.log
+*.tmp
+*.temp
+*.bak
+*.dmp
